@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>해양수산 KPI 대시보드</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <main class="dashboard-shell">
+    <header class="dashboard-header">
+      <div>
+        <h1>해양수산 KPI 대시보드</h1>
+        <p id="datasetMeta" class="dashboard-meta"></p>
+      </div>
+      <div class="source-chip">ocean_fisheries_sample_300_cp949.csv</div>
+    </header>
+
+    <section class="kpi-grid" aria-label="주요 KPI">
+      <article class="kpi-card">
+        <div class="kpi-label">
+          <span class="metric-icon icon-catch" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 12c3.5-4 8.5-4 12 0-3.5 4-8.5 4-12 0Z"/><path d="M16 12l4-3v6l-4-3Z"/><circle cx="8" cy="12" r="1"/></svg>
+          </span>
+          총 어획량
+        </div>
+        <div id="totalCatch" class="kpi-value"></div>
+        <div class="kpi-sub">catch_tons 합계</div>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-label">
+          <span class="metric-icon icon-export" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 17h14v4H5z"/></svg>
+          </span>
+          총 수출액
+        </div>
+        <div id="totalExport" class="kpi-value"></div>
+        <div class="kpi-sub">export_value_usd 합계</div>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-label">
+          <span class="metric-icon icon-satisfaction" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.5 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.8 1-6.1-4.4-4.3 6.1-.9L12 3Z"/></svg>
+          </span>
+          평균 만족도
+        </div>
+        <div id="avgSatisfaction" class="kpi-value"></div>
+        <div class="kpi-sub">public_satisfaction_score 평균</div>
+      </article>
+
+      <article class="kpi-card">
+        <div class="kpi-label">
+          <span class="metric-icon icon-incident" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 3 2.8 20h18.4L12 3Z"/><path d="M12 9v5"/><path d="M12 17h.01"/></svg>
+          </span>
+          총 안전사고 건수
+        </div>
+        <div id="totalIncidents" class="kpi-value"></div>
+        <div class="kpi-sub">safety_incident_count 합계</div>
+      </article>
+    </section>
+
+    <section class="dashboard-grid" aria-label="시각화">
+      <article class="panel panel-ranking">
+        <div class="panel-title-row">
+          <h2>항만별 위판금액 TOP 5</h2>
+          <span class="panel-unit">USD</span>
+        </div>
+        <div id="topPorts" class="ranking-chart"></div>
+      </article>
+
+      <article class="panel panel-risk">
+        <div class="panel-title-row">
+          <h2>기상위험도별 사고 건수 비교</h2>
+          <span class="panel-unit">건수</span>
+        </div>
+        <div id="riskChart" class="risk-chart"></div>
+      </article>
+
+      <article class="panel panel-wide">
+        <div class="panel-title-row">
+          <h2>월별 수출액 추이</h2>
+          <div class="legend" aria-label="범례">
+            <span><i class="legend-2024"></i>2024</span>
+            <span><i class="legend-2025"></i>2025</span>
+          </div>
+        </div>
+        <div id="monthlyExportChart" class="line-chart"></div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
