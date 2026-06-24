@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>유형별 해양사고 현황 대시보드</title>
+  <style>
+    :root {
+      --bg: #f4f8fb;
+      --panel: #ffffff;
+      --text: #1f2a37;
+      --muted: #6b7280;
+      --primary: #0f6b8f;
+      --primary-dark: #0a4f6a;
+      --line: #d8e3ea;
+      --accent: #eaf6fb;
+      --shadow: 0 16px 40px rgba(15, 107, 143, 0.12);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Roboto, sans-serif;
+      background: radial-gradient(circle at top left, #dff3fb, transparent 34%), var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    .wrap {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 52px;
+    }
+
+    header {
+      padding: 34px;
+      border-radius: 30px;
+      color: white;
+      background: linear-gradient(135deg, #063c58, #0f789e 58%, #35a5c6);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    header::after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      top: -80px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.16);
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      opacity: 0.9;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      font-size: 0.86rem;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 5vw, 3.6rem);
+      line-height: 1.1;
+      letter-spacing: -0.04em;
+    }
+
+    .period {
+      margin: 18px 0 0;
+      font-size: 1.04rem;
+      opacity: 0.95;
+    }
+
+    section { margin-top: 28px; }
+
+    .section-title {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 1.35rem;
+      letter-spacing: -0.02em;
+    }
+
+    .hint {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card, .panel {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(216, 227, 234, 0.9);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .card {
+      padding: 22px;
+      min-height: 140px;
+    }
+
+    .card .label {
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 0.9rem;
+    }
+
+    .card .value {
+      margin-top: 10px;
+      font-size: clamp(1.6rem, 4vw, 2.35rem);
+      font-weight: 900;
+      letter-spacing: -0.04em;
+      color: var(--primary-dark);
+    }
+
+    .card .desc {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.05fr 0.95fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      padding: 22px;
+      overflow: hidden;
+    }
+
+    .table-box {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 560px;
+      background: white;
+    }
+
+    th, td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    th {
+      background: var(--accent);
+      color: #16475b;
+      font-size: 0.9rem;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:hover { background: #f8fbfd; }
+
+    .chart-stack {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 300px;
+      display: block;
+    }
+
+    .bar-list {
+      display: grid;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .bar-row {
+      display: grid;
+      grid-template-columns: 96px 1fr 72px;
+      gap: 12px;
+      align-items: center;
+      font-size: 0.92rem;
+    }
+
+    .bar-track {
+      height: 12px;
+      border-radius: 999px;
+      background: #e6eef3;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #0f789e, #54bfd8);
+    }
+
+    footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    @media (max-width: 920px) {
+      .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .wrap { width: min(100% - 20px, 1180px); padding-top: 16px; }
+      header { padding: 24px; border-radius: 22px; }
+      .cards { grid-template-columns: 1fr; }
+      .section-title { align-items: start; flex-direction: column; }
+      .panel, .card { padding: 18px; }
+      .bar-row { grid-template-columns: 78px 1fr 60px; gap: 8px; }
+      canvas { height: 260px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <p class="eyebrow">MARINE ACCIDENT DASHBOARD</p>
+      <h1>유형별 해양사고 현황</h1>
+      <p class="period" id="periodText">데이터 기간 계산 중...</p>
+    </header>
+
+    <section>
+      <div class="section-title">
+        <h2>요약 카드</h2>
+        <p class="hint">전체 기간 기준 핵심 지표</p>
+      </div>
+      <div class="cards" id="summaryCards"></div>
+    </section>
+
+    <section class="grid-2">
+      <div class="panel">
+        <div class="section-title">
+          <h2>데이터 표</h2>
+          <p class="hint">사고 유형별 누적 건수 및 비중</p>
+        </div>
+        <div class="table-box">
+          <table>
+            <thead>
+              <tr>
+                <th>순위</th>
+                <th>사고 유형</th>
+                <th>누적 건수</th>
+                <th>비중</th>
+              </tr>
+            </thead>
+            <tbody id="typeTable"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="section-title">
+          <h2>시각화</h2>
+          <p class="hint">상위 사고 유형 막대 그래프</p>
+        </div>
+        <div id="barList" class="bar-list"></div>
+      </div>
+    </section>
+
+    <section class="chart-stack">
+      <div class="panel">
+        <div class="section-title">
+          <h2>연도별 전체 사고 추이</h2>
+          <p class="hint">1998년부터 2012년까지 총계 변화</p>
+        </div>
+        <canvas id="trendCanvas" width="1000" height="360" aria-label="연도별 사고 총계 선 그래프"></canvas>
+      </div>
+    </section>
+
+    <footer>데이터: 해양수산부 유형별 해양사고현황 CSV · 단위: 건</footer>
+  </main>
+
+  <script>
+    const rows = [{"시점":1998,"총계":772,"충돌":147,"접촉":5,"좌초":77,"전복":14,"화재/폭발":60,"침몰":84,"행방불명":4,"기관손상":242,"추진기손상":24,"키손상":10,"속구손상":2,"조난":48,"시설물손상":4,"인명사상":8,"안전운항저해":43,"해양오염":0,"기타":0},{"시점":1999,"총계":849,"충돌":173,"접촉":2,"좌초":68,"전복":27,"화재/폭발":67,"침몰":90,"행방불명":4,"기관손상":269,"추진기손상":18,"키손상":15,"속구손상":2,"조난":24,"시설물손상":2,"인명사상":13,"안전운항저해":73,"해양오염":2,"기타":0},{"시점":2000,"총계":634,"충돌":130,"접촉":11,"좌초":58,"전복":19,"화재/폭발":48,"침몰":63,"행방불명":2,"기관손상":196,"추진기손상":8,"키손상":5,"속구손상":1,"조난":23,"시설물손상":0,"인명사상":19,"안전운항저해":51,"해양오염":0,"기타":0},{"시점":2001,"총계":610,"충돌":141,"접촉":15,"좌초":60,"전복":21,"화재/폭발":62,"침몰":72,"행방불명":1,"기관손상":135,"추진기손상":8,"키손상":6,"속구손상":1,"조난":25,"시설물손상":1,"인명사상":17,"안전운항저해":44,"해양오염":1,"기타":0},{"시점":2002,"총계":557,"충돌":184,"접촉":13,"좌초":58,"전복":29,"화재/폭발":42,"침몰":55,"행방불명":0,"기관손상":110,"추진기손상":9,"키손상":3,"속구손상":0,"조난":18,"시설물손상":3,"인명사상":20,"안전운항저해":13,"해양오염":0,"기타":0},{"시점":2003,"총계":531,"충돌":182,"접촉":9,"좌초":65,"전복":22,"화재/폭발":53,"침몰":50,"행방불명":2,"기관손상":57,"추진기손상":12,"키손상":1,"속구손상":2,"조난":21,"시설물손상":0,"인명사상":43,"안전운항저해":12,"해양오염":0,"기타":0},{"시점":2004,"총계":804,"충돌":210,"접촉":12,"좌초":75,"전복":35,"화재/폭발":57,"침몰":69,"행방불명":1,"기관손상":147,"추진기손상":17,"키손상":12,"속구손상":0,"조난":45,"시설물손상":1,"인명사상":80,"안전운항저해":42,"해양오염":1,"기타":0},{"시점":2005,"총계":658,"충돌":172,"접촉":10,"좌초":46,"전복":22,"화재/폭발":71,"침몰":45,"행방불명":1,"기관손상":166,"추진기손상":17,"키손상":14,"속구손상":0,"조난":16,"시설물손상":2,"인명사상":34,"안전운항저해":41,"해양오염":1,"기타":0},{"시점":2006,"총계":657,"충돌":167,"접촉":17,"좌초":66,"전복":16,"화재/폭발":41,"침몰":25,"행방불명":0,"기관손상":195,"추진기손상":11,"키손상":14,"속구손상":0,"조난":11,"시설물손상":1,"인명사상":20,"안전운항저해":68,"해양오염":5,"기타":0},{"시점":2007,"총계":566,"충돌":148,"접촉":9,"좌초":39,"전복":21,"화재/폭발":37,"침몰":19,"행방불명":1,"기관손상":185,"추진기손상":4,"키손상":17,"속구손상":0,"조난":8,"시설물손상":1,"인명사상":11,"안전운항저해":65,"해양오염":1,"기타":0},{"시점":2008,"총계":480,"충돌":125,"접촉":15,"좌초":32,"전복":8,"화재/폭발":25,"침몰":18,"행방불명":0,"기관손상":145,"추진기손상":7,"키손상":14,"속구손상":0,"조난":11,"시설물손상":2,"인명사상":17,"안전운항저해":61,"해양오염":0,"기타":0},{"시점":2009,"총계":723,"충돌":160,"접촉":10,"좌초":43,"전복":18,"화재/폭발":34,"침몰":22,"행방불명":2,"기관손상":253,"추진기손상":16,"키손상":29,"속구손상":0,"조난":16,"시설물손상":1,"인명사상":21,"안전운항저해":96,"해양오염":2,"기타":0},{"시점":2010,"총계":737,"충돌":174,"접촉":22,"좌초":64,"전복":17,"화재/폭발":25,"침몰":22,"행방불명":0,"기관손상":236,"추진기손상":8,"키손상":24,"속구손상":1,"조난":9,"시설물손상":4,"인명사상":33,"안전운항저해":91,"해양오염":7,"기타":0},{"시점":2011,"총계":946,"충돌":208,"접촉":23,"좌초":64,"전복":38,"화재/폭발":57,"침몰":27,"행방불명":0,"기관손상":261,"추진기손상":13,"키손상":18,"속구손상":1,"조난":41,"시설물손상":4,"인명사상":82,"안전운항저해":101,"해양오염":8,"기타":0},{"시점":2012,"총계":726,"충돌":157,"접촉":21,"좌초":53,"전복":25,"화재/폭발":55,"침몰":26,"행방불명":11,"기관손상":178,"추진기손상":7,"키손상":13,"속구손상":0,"조난":44,"시설물손상":3,"인명사상":57,"안전운항저해":68,"해양오염":8,"기타":0}];
+
+    const format = new Intl.NumberFormat('ko-KR');
+    const years = rows.map(row => row['시점']);
+    const categories = Object.keys(rows[0]).filter(key => !['시점', '총계'].includes(key));
+    const total = rows.reduce((sum, row) => sum + row['총계'], 0);
+    const annualMax = rows.reduce((max, row) => row['총계'] > max['총계'] ? row : max, rows[0]);
+    const typeTotals = categories.map(type => ({
+      type,
+      total: rows.reduce((sum, row) => sum + row[type], 0)
+    })).sort((a, b) => b.total - a.total);
+    const topType = typeTotals[0];
+
+    document.getElementById('periodText').textContent = `데이터 기간: ${Math.min(...years)}년 ~ ${Math.max(...years)}년 · 총 ${rows.length}개 연도`;
+
+    const cards = [
+      { label: '전체 사고 건수', value: `${format.format(total)}건`, desc: `${years[0]}~${years[years.length - 1]}년 누적` },
+      { label: '최다 사고 유형', value: topType.type, desc: `${format.format(topType.total)}건, 전체의 ${(topType.total / total * 100).toFixed(1)}%` },
+      { label: '최다 발생 연도', value: `${annualMax['시점']}년`, desc: `총 ${format.format(annualMax['총계'])}건 발생` },
+      { label: '분석 사고 유형', value: `${categories.length}개`, desc: '총계 제외 사고 유형 수' }
+    ];
+
+    document.getElementById('summaryCards').innerHTML = cards.map(card => `
+      <article class="card">
+        <div class="label">${card.label}</div>
+        <div class="value">${card.value}</div>
+        <div class="desc">${card.desc}</div>
+      </article>
+    `).join('');
+
+    document.getElementById('typeTable').innerHTML = typeTotals.map((item, index) => `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${item.type}</td>
+        <td>${format.format(item.total)}</td>
+        <td>${(item.total / total * 100).toFixed(1)}%</td>
+      </tr>
+    `).join('');
+
+    const topEight = typeTotals.slice(0, 8);
+    const maxTypeValue = topEight[0].total;
+    document.getElementById('barList').innerHTML = topEight.map(item => `
+      <div class="bar-row">
+        <strong>${item.type}</strong>
+        <div class="bar-track"><div class="bar-fill" style="width:${item.total / maxTypeValue * 100}%"></div></div>
+        <span>${format.format(item.total)}</span>
+      </div>
+    `).join('');
+
+    function drawTrendChart() {
+      const canvas = document.getElementById('trendCanvas');
+      const ctx = canvas.getContext('2d');
+      const width = canvas.width;
+      const height = canvas.height;
+      const pad = { left: 62, right: 26, top: 30, bottom: 54 };
+      const values = rows.map(row => row['총계']);
+      const min = Math.floor(Math.min(...values) / 100) * 100;
+      const max = Math.ceil(Math.max(...values) / 100) * 100;
+      const chartW = width - pad.left - pad.right;
+      const chartH = height - pad.top - pad.bottom;
+      const x = index => pad.left + (chartW / (values.length - 1)) * index;
+      const y = value => pad.top + chartH - ((value - min) / (max - min)) * chartH;
+
+      ctx.clearRect(0, 0, width, height);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.strokeStyle = '#d8e3ea';
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#6b7280';
+      ctx.font = '14px Noto Sans KR, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+
+      for (let tick = min; tick <= max; tick += 100) {
+        const yy = y(tick);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, yy);
+        ctx.lineTo(width - pad.right, yy);
+        ctx.stroke();
+        ctx.fillText(format.format(tick), pad.left - 12, yy);
+      }
+
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      years.forEach((year, index) => {
+        if (index % 2 === 0 || index === years.length - 1) {
+          ctx.fillText(year, x(index), height - pad.bottom + 22);
+        }
+      });
+
+      const gradient = ctx.createLinearGradient(0, pad.top, 0, height - pad.bottom);
+      gradient.addColorStop(0, 'rgba(15, 120, 158, 0.28)');
+      gradient.addColorStop(1, 'rgba(15, 120, 158, 0.03)');
+
+      ctx.beginPath();
+      values.forEach((value, index) => {
+        const px = x(index);
+        const py = y(value);
+        if (index === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.lineTo(x(values.length - 1), height - pad.bottom);
+      ctx.lineTo(x(0), height - pad.bottom);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      ctx.beginPath();
+      values.forEach((value, index) => {
+        const px = x(index);
+        const py = y(value);
+        if (index === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      });
+      ctx.strokeStyle = '#0f789e';
+      ctx.lineWidth = 4;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.stroke();
+
+      values.forEach((value, index) => {
+        ctx.beginPath();
+        ctx.arc(x(index), y(value), 5, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
+        ctx.strokeStyle = '#0f789e';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      });
+    }
+
+    drawTrendChart();
+    window.addEventListener('resize', drawTrendChart);
+  </script>
+</body>
+</html>
