@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>해양사고 현황 대시보드 | 1998-2012</title>
+  <style>
+    :root {
+      --navy:#153e75; --blue:#2563eb; --sky:#eaf3ff; --line:#d7e2f0;
+      --text:#1f2937; --muted:#6b7280; --bg:#f6f8fb; --white:#fff;
+      --accent:#ffec99; --accent-border:#f59e0b;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif; background:var(--bg); color:var(--text); }
+    header { background:linear-gradient(135deg,var(--navy),#1d4ed8); color:white; padding:34px 24px; }
+    .wrap { max-width:1120px; margin:0 auto; }
+    h1 { margin:0 0 8px; font-size:clamp(26px,4vw,40px); letter-spacing:-0.04em; }
+    .subtitle { margin:0; opacity:.9; font-size:16px; }
+    main { padding:24px; }
+    .controls { display:grid; grid-template-columns:repeat(3,minmax(180px,1fr)); gap:16px; margin-bottom:20px; }
+    .card { background:var(--white); border:1px solid var(--line); border-radius:18px; box-shadow:0 10px 30px rgba(21,62,117,.08); padding:20px; }
+    label { display:block; font-weight:700; margin-bottom:8px; color:#23385f; }
+    select, input { width:100%; min-height:44px; border:1px solid #b9c8dc; border-radius:12px; padding:0 12px; font-size:15px; background:white; }
+    .metric-grid { display:grid; grid-template-columns:1fr 2fr; gap:20px; align-items:stretch; margin-bottom:20px; }
+    .big-number { font-size:48px; font-weight:800; color:var(--navy); line-height:1; margin:10px 0; }
+    .metric-caption { color:var(--muted); margin:0; }
+    table { width:100%; border-collapse:collapse; overflow:hidden; border-radius:14px; font-size:15px; }
+    thead th { background:#eef5ff; color:#173461; text-align:right; padding:13px 12px; border-bottom:1px solid var(--line); white-space:nowrap; }
+    thead th:first-child, tbody td:first-child { text-align:center; font-weight:800; }
+    tbody td { padding:12px; border-bottom:1px solid #eef2f7; text-align:right; }
+    tbody tr:hover { background:#f9fbff; }
+    tbody tr.selected { background:#eaf3ff; outline:2px solid var(--blue); outline-offset:-2px; }
+    tbody tr.highlight { background:var(--accent); outline:3px solid var(--accent-border); outline-offset:-3px; }
+    .badge { display:inline-block; padding:5px 10px; background:var(--sky); color:var(--navy); border-radius:999px; font-weight:800; font-size:13px; }
+    .section-title { display:flex; justify-content:space-between; gap:16px; align-items:center; margin-bottom:12px; }
+    .section-title h2 { margin:0; font-size:20px; letter-spacing:-0.03em; }
+    .bars { display:grid; gap:10px; }
+    .bar-row { display:grid; grid-template-columns:82px 1fr 70px; align-items:center; gap:10px; }
+    .bar-label { font-weight:700; }
+    .bar-track { height:22px; background:#eef2f7; border-radius:999px; overflow:hidden; }
+    .bar-fill { height:100%; background:linear-gradient(90deg,#60a5fa,#1d4ed8); border-radius:999px; width:0%; transition:width .25s ease; }
+    .bar-value { text-align:right; font-variant-numeric:tabular-nums; font-weight:800; }
+    .note { margin-top:12px; color:var(--muted); font-size:13px; }
+    .empty { color:#b91c1c; font-weight:700; margin-top:8px; display:none; }
+    @media (max-width:860px) { .controls, .metric-grid { grid-template-columns:1fr; } .table-card { overflow-x:auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>해양사고 현황 대시보드</h1>
+      <p class="subtitle">해양수산부 정보화담당관실 · 1998년부터 2012년까지 연도별·유형별 사고 현황</p>
+    </div>
+  </header>
+  <main class="wrap">
+    <section class="controls">
+      <div class="card">
+        <label for="yearSelect">1. 연도 선택 필터</label>
+        <select id="yearSelect" aria-label="연도 선택"></select>
+      </div>
+      <div class="card">
+        <label for="searchYear">4. 연도 직접 검색</label>
+        <input id="searchYear" type="number" inputmode="numeric" placeholder="예: 2011" min="1998" max="2012" />
+        <div id="searchMessage" class="empty">해당 연도 데이터가 없습니다.</div>
+      </div>
+      <div class="card">
+        <label>데이터 범위</label>
+        <div class="badge">1998년 - 2012년</div>
+        <p class="note">드롭다운 선택 시 해당 연도 데이터만 요약 표시됩니다.</p>
+      </div>
+    </section>
+
+    <section class="metric-grid">
+      <div class="card">
+        <div class="section-title"><h2>3. 전체 건수 합계</h2></div>
+        <div id="selectedYearLabel" class="badge"></div>
+        <div id="totalCount" class="big-number">-</div>
+        <p class="metric-caption">선택한 연도의 해양사고 총계</p>
+      </div>
+      <div class="card">
+        <div class="section-title"><h2>2. 사고유형별 건수 표</h2><span id="typeYear" class="badge"></span></div>
+        <div id="typeBars" class="bars" aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="card table-card">
+      <div class="section-title"><h2>연도별·유형별 전체 현황</h2><span class="badge">검색 연도는 노란색으로 강조</span></div>
+      <table aria-label="연도별 해양사고 현황 표">
+        <thead><tr><th>연도</th><th>총계</th><th>충돌</th><th>접촉</th><th>좌초</th><th>전복</th><th>화재폭발</th><th>침몰</th><th>기관손상</th></tr></thead>
+        <tbody id="dataBody"></tbody>
+      </table>
+    </section>
+  </main>
+  <script>
+    const DATA = [{"연도": 1998, "총계": 772, "충돌": 147, "접촉": 5, "좌초": 77, "전복": 14, "화재폭발": 60, "침몰": 84, "기관손상": 242}, {"연도": 1999, "총계": 849, "충돌": 173, "접촉": 2, "좌초": 68, "전복": 27, "화재폭발": 67, "침몰": 90, "기관손상": 269}, {"연도": 2000, "총계": 634, "충돌": 130, "접촉": 11, "좌초": 58, "전복": 19, "화재폭발": 48, "침몰": 63, "기관손상": 196}, {"연도": 2001, "총계": 610, "충돌": 141, "접촉": 15, "좌초": 60, "전복": 21, "화재폭발": 62, "침몰": 72, "기관손상": 135}, {"연도": 2002, "총계": 557, "충돌": 184, "접촉": 13, "좌초": 58, "전복": 29, "화재폭발": 42, "침몰": 55, "기관손상": 110}, {"연도": 2003, "총계": 531, "충돌": 182, "접촉": 9, "좌초": 65, "전복": 22, "화재폭발": 53, "침몰": 50, "기관손상": 57}, {"연도": 2004, "총계": 804, "충돌": 210, "접촉": 12, "좌초": 75, "전복": 35, "화재폭발": 57, "침몰": 69, "기관손상": 147}, {"연도": 2005, "총계": 658, "충돌": 172, "접촉": 10, "좌초": 46, "전복": 22, "화재폭발": 71, "침몰": 45, "기관손상": 166}, {"연도": 2006, "총계": 657, "충돌": 167, "접촉": 17, "좌초": 66, "전복": 16, "화재폭발": 41, "침몰": 25, "기관손상": 195}, {"연도": 2007, "총계": 566, "충돌": 148, "접촉": 9, "좌초": 39, "전복": 21, "화재폭발": 37, "침몰": 19, "기관손상": 185}, {"연도": 2008, "총계": 480, "충돌": 125, "접촉": 15, "좌초": 32, "전복": 8, "화재폭발": 25, "침몰": 18, "기관손상": 145}, {"연도": 2009, "총계": 723, "충돌": 160, "접촉": 10, "좌초": 43, "전복": 18, "화재폭발": 34, "침몰": 22, "기관손상": 253}, {"연도": 2010, "총계": 737, "충돌": 174, "접촉": 22, "좌초": 64, "전복": 17, "화재폭발": 25, "침몰": 22, "기관손상": 236}, {"연도": 2011, "총계": 946, "충돌": 208, "접촉": 23, "좌초": 64, "전복": 38, "화재폭발": 57, "침몰": 27, "기관손상": 261}, {"연도": 2012, "총계": 726, "충돌": 157, "접촉": 21, "좌초": 53, "전복": 25, "화재폭발": 55, "침몰": 26, "기관손상": 178}];
+    const TYPE_COLS = ["충돌", "접촉", "좌초", "전복", "화재폭발", "침몰", "기관손상"];
+    const yearSelect = document.getElementById('yearSelect');
+    const searchYear = document.getElementById('searchYear');
+    const searchMessage = document.getElementById('searchMessage');
+    const dataBody = document.getElementById('dataBody');
+    const totalCount = document.getElementById('totalCount');
+    const selectedYearLabel = document.getElementById('selectedYearLabel');
+    const typeYear = document.getElementById('typeYear');
+    const typeBars = document.getElementById('typeBars');
+
+    function formatNumber(n) { return Number(n).toLocaleString('ko-KR'); }
+    function findByYear(year) { return DATA.find(row => String(row['연도']) === String(year)); }
+
+    function populateSelect() {
+      DATA.forEach(row => {
+        const opt = document.createElement('option');
+        opt.value = row['연도'];
+        opt.textContent = row['연도'] + '년';
+        yearSelect.appendChild(opt);
+      });
+      const maxTotal = DATA.reduce((a,b) => a['총계'] > b['총계'] ? a : b);
+      yearSelect.value = maxTotal['연도'];
+    }
+
+    function renderTable(selectedYear, highlightedYear) {
+      dataBody.innerHTML = '';
+      DATA.forEach(row => {
+        const tr = document.createElement('tr');
+        if (String(row['연도']) === String(selectedYear)) tr.classList.add('selected');
+        if (highlightedYear && String(row['연도']) === String(highlightedYear)) tr.classList.add('highlight');
+        Object.keys(row).forEach(key => {
+          const td = document.createElement('td');
+          td.textContent = key === '연도' ? row[key] : formatNumber(row[key]);
+          tr.appendChild(td);
+        });
+        dataBody.appendChild(tr);
+      });
+    }
+
+    function renderSummary(year) {
+      const row = findByYear(year);
+      if (!row) return;
+      selectedYearLabel.textContent = row['연도'] + '년';
+      typeYear.textContent = row['연도'] + '년 기준';
+      totalCount.textContent = formatNumber(row['총계']) + '건';
+      const maxType = Math.max(...TYPE_COLS.map(col => row[col]));
+      typeBars.innerHTML = '';
+      TYPE_COLS.forEach(col => {
+        const percent = maxType === 0 ? 0 : (row[col] / maxType) * 100;
+        const div = document.createElement('div');
+        div.className = 'bar-row';
+        div.innerHTML = `<div class="bar-label">${col}</div><div class="bar-track"><div class="bar-fill" style="width:${percent}%"></div></div><div class="bar-value">${formatNumber(row[col])}건</div>`;
+        typeBars.appendChild(div);
+      });
+    }
+
+    function updateDashboard() {
+      const selectedYear = yearSelect.value;
+      const query = searchYear.value.trim();
+      const matched = query ? findByYear(query) : null;
+      searchMessage.style.display = query && !matched ? 'block' : 'none';
+      renderSummary(selectedYear);
+      renderTable(selectedYear, matched ? query : null);
+      if (matched) {
+        const highlighted = [...dataBody.querySelectorAll('tr.highlight')][0];
+        if (highlighted) highlighted.scrollIntoView({ behavior:'smooth', block:'center' });
+      }
+    }
+
+    populateSelect();
+    yearSelect.addEventListener('change', updateDashboard);
+    searchYear.addEventListener('input', updateDashboard);
+    updateDashboard();
+  </script>
+</body>
+</html>
